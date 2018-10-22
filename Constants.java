@@ -9,7 +9,7 @@ public class Constants {
     private static int port = 1234;
     private static int windowSize = 4;
     private static int timeout = 1; //ms
-    private static int maxPacketCount = 10;
+    private static int maxPacketCount = 1000;
     private static int upperLayerBufferSize = 20;
     private static String baseMessage = "hi";
     

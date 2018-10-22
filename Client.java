@@ -10,17 +10,14 @@ import java.util.Arrays;
 
 public class Client {
 
-    public static boolean checkAcks(int windowPosition, Datagram[] datagrams) {
-
-        int ackedCounter = 0;
-
-        for (int datagramNumber = windowPosition; datagramNumber < (windowPosition + Constants.getWindowSize()); datagramNumber ++ ) {
-            if (datagrams[datagramNumber].isAcknowledged()) {
-                ackedCounter += 1;
-            }
+    public static boolean checkAcks(Datagram[] datagrams) {
+        for (int datagramNumber = 0; datagramNumber < datagrams.length; datagramNumber ++ ) {
+            if (!datagrams[datagramNumber].isAcknowledged()) {
+                return false;
+            } 
         }
 
-        return ackedCounter == Constants.getWindowSize();
+        return true;
     }
 
     // CHECK ALL DATAGRAMS BEFORE THE CURRENT ONE (FOR WHICH ACK IS RECEIVED), TO MAKE SURE ALL OF THEM HAVE ALREADY BEEN ACKED.
@@ -76,47 +73,67 @@ public class Client {
         else if (args[0].equals("rdt")) {
 
             
-            while ((windowPosition + Constants.getWindowSize()) <= datagrams.length)
+            // while ((windowPosition + Constants.getWindowSize()) <= datagrams.length)
+            while (!checkAcks(datagrams))
             {
                 int startWindowPosition = windowPosition;
-                System.out.println(startWindowPosition);
                 
                 System.out.println("Sending Window #" + String.valueOf(windowPosition));
                 
-                for (int datagramNumber = windowPosition; datagramNumber < (windowPosition + Constants.getWindowSize()); datagramNumber ++ ) {
-                    System.out.println("\t Sending Packet #" + String.valueOf(datagrams[datagramNumber].getPacketNumber()));
-
-                    byte[] datagramBytes = Constants.datagramToByteArray(datagrams[datagramNumber]);
-                    DatagramPacket datagramPacketSend =  new DatagramPacket(datagramBytes, datagramBytes.length, inetAddress, Constants.getPort());
-                    
-                    datagramSocket.send(datagramPacketSend);
-                    datagrams[datagramNumber].setSent(true);
-                    datagrams[datagramNumber].setAcknowledged(false);
+                if (windowPosition + Constants.getWindowSize() < datagrams.length) {
+                    for (int datagramNumber = windowPosition; datagramNumber < (windowPosition + Constants.getWindowSize()); datagramNumber ++ ) {
+                        System.out.println("\t Sending Packet #" + String.valueOf(datagrams[datagramNumber].getPacketNumber()));
+                        
+                        byte[] datagramBytes = Constants.datagramToByteArray(datagrams[datagramNumber]);
+                        DatagramPacket datagramPacketSend =  new DatagramPacket(datagramBytes, datagramBytes.length, inetAddress, Constants.getPort());
+                        
+                        datagramSocket.send(datagramPacketSend);
+                        datagrams[datagramNumber].setSent(true);
+                        datagrams[datagramNumber].setAcknowledged(false);
+                    }
+                } else {
+                    for (int datagramNumber = windowPosition; datagramNumber < datagrams.length; datagramNumber ++ ) {
+                        System.out.println("\t Sending Packet #" + String.valueOf(datagrams[datagramNumber].getPacketNumber()));
+                        
+                        byte[] datagramBytes = Constants.datagramToByteArray(datagrams[datagramNumber]);
+                        DatagramPacket datagramPacketSend =  new DatagramPacket(datagramBytes, datagramBytes.length, inetAddress, Constants.getPort());
+                        
+                        datagramSocket.send(datagramPacketSend);
+                        datagrams[datagramNumber].setSent(true);
+                        datagrams[datagramNumber].setAcknowledged(false);
+                    }
                 }
                 
                 byte[] acknowledgementData = new byte[1024];
-
+                
                 datagramSocket.setSoTimeout(Constants.getTimeout());
-
+                
                 ArrayList<Integer> ackList = new ArrayList<>();
-
+                
                 while (true) {
                     try {
                         DatagramPacket datagramPacketReceive = new DatagramPacket(acknowledgementData, acknowledgementData.length);
                         datagramSocket.receive(datagramPacketReceive);
-
+                        
                         String ackString = Constants.convertByteArrayToString(acknowledgementData).toString();
-
+                        
                         if (ackString != null) {
                             if (ackString.contains("ACK")) {
-                                System.out.println(ackString);
                                 String[] ackResponse = ackString.split(";;");
-                               int seqNumber = Integer.parseInt(ackResponse[1]);
-                                if (checkAckOrdering(datagrams, (seqNumber%Constants.getWindowSize()) + startWindowPosition)) {
+                                int seqNumber = Integer.parseInt(ackResponse[1]);
+                                int expectedSeqNumber = datagrams[windowPosition].getSequenceNumber();
+                                // System.out.println(startWindowPosition);
+                                if (expectedSeqNumber == seqNumber) {
                                     ackList.add(seqNumber);
-                                    datagrams[(seqNumber%Constants.getWindowSize()) + startWindowPosition].setAcknowledged(true);
-                                    System.out.println(Arrays.toString(ackResponse) + ": Acknowledgement for Packet: " + String.valueOf(seqNumber%Constants.getWindowSize() + startWindowPosition));
+                                    datagrams[windowPosition].setAcknowledged(true);
+                                    System.out.println(Arrays.toString(ackResponse) 
+                                        + ": Acknowledgement for Packet: "
+                                        + String.valueOf(windowPosition));
                                     windowPosition += 1;
+                                }
+
+                                if (windowPosition == datagrams.length) {
+                                    break;
                                 }
                             }
                         }
@@ -135,6 +152,8 @@ public class Client {
                 // if (ackList.size() == Constants.getWindowSize() && checkAcks(windowPosition, datagrams)) {
                 if (windowPosition == startWindowPosition + Constants.getWindowSize()) {
                     ackList.clear();
+                } else if (checkAcks(datagrams)) {
+                    break;
                 } else {
                     System.out.println("Retransmitting Window at Position: " + String.valueOf(windowPosition));
                     ackList.clear();
