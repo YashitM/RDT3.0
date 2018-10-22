@@ -79,7 +79,8 @@ public class Client {
             while ((windowPosition + Constants.getWindowSize()) <= datagrams.length)
             {
                 int startWindowPosition = windowPosition;
-
+                System.out.println(startWindowPosition);
+                
                 System.out.println("Sending Window #" + String.valueOf(windowPosition));
                 
                 for (int datagramNumber = windowPosition; datagramNumber < (windowPosition + Constants.getWindowSize()); datagramNumber ++ ) {
@@ -108,12 +109,13 @@ public class Client {
 
                         if (ackString != null) {
                             if (ackString.contains("ACK")) {
+                                System.out.println(ackString);
                                 String[] ackResponse = ackString.split(";;");
-                                int seqNumber = Integer.parseInt(ackResponse[1]);
+                               int seqNumber = Integer.parseInt(ackResponse[1]);
                                 if (checkAckOrdering(datagrams, (seqNumber%Constants.getWindowSize()) + startWindowPosition)) {
                                     ackList.add(seqNumber);
                                     datagrams[(seqNumber%Constants.getWindowSize()) + startWindowPosition].setAcknowledged(true);
-                                    System.out.println(Arrays.toString(ackResponse) + ": Acknowledgement for Packet: " + String.valueOf(seqNumber + startWindowPosition));
+                                    System.out.println(Arrays.toString(ackResponse) + ": Acknowledgement for Packet: " + String.valueOf(seqNumber%Constants.getWindowSize() + startWindowPosition));
                                     windowPosition += 1;
                                 }
                             }

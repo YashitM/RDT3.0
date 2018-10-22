@@ -10,9 +10,8 @@ public class Server
 
     private static ArrayList<Datagram> upperLayerBuffer = new ArrayList<>();
 
-    public static String checkOrder(int lastReceived, int incomingSeqNumber) {        
-
-        if (lastReceived == -1) {
+    public static String checkOrder(int lastReceived, int incomingSeqNumber) {
+        if (lastReceived == -1 || lastReceived == 2*Constants.getWindowSize() - 1) {
             if (incomingSeqNumber == 0) {
                 return "Ordered";
             } else {
@@ -20,31 +19,18 @@ public class Server
             }
         } else if (lastReceived == (incomingSeqNumber - 1)) {
             return "Ordered";
-        } else if (lastReceived == )
-        
+        } else if ((lastReceived - Constants.getWindowSize() + 1) == incomingSeqNumber) {
+            return "Duplicate";
+        } else if ((lastReceived - Constants.getWindowSize() + 1) < 0) {
+            int expectedSeqNumber = Constants.getWindowSize() + lastReceived + 1;
+            if (incomingSeqNumber == expectedSeqNumber) {
+                return "Duplicate";
+            } else {
+                return "Not Ordered";
+            }
         } else {
             return "Not Ordered";
         }
-        // } else if (lastReceived == Constants.getWindowSize() - 1) {
-        //     if (incomingSeqNumber == 0) {
-        //         // RETRANSMISSION
-        //         return "Duplicate";
-        //     } else if (incomingSeqNumber == Constants.getWindowSize()) {
-        //         // WINDOW RECEIVED CORRECTLY, NEXT ONE BEING TRANSMITTED
-        //         return "Ordered";
-        //     } else {
-        //         return "Not Ordered";
-        //     }
-        // } else if (lastReceived == (2*Constants.getWindowSize() - 1)) {
-        //     if (incomingSeqNumber == Constants.getWindowSize()) {
-        //         // RETRANSMISSION
-        //         return "Duplicate";
-        //     } else if (incomingSeqNumber == 0) {
-        //         // WINDOW RECEIVED CORRECTLY, NEXT ONE BEING TRANSMITTED
-        //         return "Ordered";
-        //     } else {
-        //         return "Not Ordered";
-        //     }
     }
 
     public static void main(String[] args) throws IOException
