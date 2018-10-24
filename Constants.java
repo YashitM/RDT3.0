@@ -6,9 +6,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public class Constants {
-    private static int port = 1234;
-    private static int windowSize = 4;
-    private static int timeout = 1; //ms
+    private static int port = 12349;
+    private static int windowSize = 5;
+    private static int timeout = 500; //ms
     private static int maxPacketCount = 1000;
     private static int upperLayerBufferSize = 20;
     private static String baseMessage = "hi";

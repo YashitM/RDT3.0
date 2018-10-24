@@ -16,7 +16,6 @@ public class Client {
                 return false;
             } 
         }
-
         return true;
     }
 
@@ -45,6 +44,10 @@ public class Client {
         BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
         DatagramSocket datagramSocket = new DatagramSocket();
+
+        // System.out.print("Enter the Server IP Address: ");
+        // String clientIpAddressString = input.readLine();
+
         InetAddress inetAddress = InetAddress.getByName("0.0.0.0");
 
         Datagram[] datagrams = new Datagram[Constants.getMaxPacketCount()];
@@ -72,7 +75,7 @@ public class Client {
         }
         else if (args[0].equals("rdt")) {
 
-            
+            int receiverBufferFlowControl = -1;            
             // while ((windowPosition + Constants.getWindowSize()) <= datagrams.length)
             while (!checkAcks(datagrams))
             {
@@ -121,12 +124,13 @@ public class Client {
                             if (ackString.contains("ACK")) {
                                 String[] ackResponse = ackString.split(";;");
                                 int seqNumber = Integer.parseInt(ackResponse[1]);
+                                receiverBufferFlowControl = Integer.parseInt(ackResponse[2]);
                                 int expectedSeqNumber = datagrams[windowPosition].getSequenceNumber();
                                 // System.out.println(startWindowPosition);
                                 if (expectedSeqNumber == seqNumber) {
                                     ackList.add(seqNumber);
                                     datagrams[windowPosition].setAcknowledged(true);
-                                    System.out.println(Arrays.toString(ackResponse) 
+                                    System.out.println(Arrays.toString(ackResponse)
                                         + ": Acknowledgement for Packet: "
                                         + String.valueOf(windowPosition));
                                     windowPosition += 1;
