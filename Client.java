@@ -45,7 +45,7 @@ public class Client {
         BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
         DatagramSocket datagramSocket = new DatagramSocket();
-        InetAddress inetAddress = InetAddress.getLocalHost();
+        InetAddress inetAddress = InetAddress.getByName("0.0.0.0");
 
         Datagram[] datagrams = new Datagram[Constants.getMaxPacketCount()];
         int counter = 0;
